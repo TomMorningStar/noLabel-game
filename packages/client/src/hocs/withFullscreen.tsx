@@ -30,11 +30,11 @@ export const withFullscreen =
     });
 
     return (
-      <div className='fullscreen'>
+      <div className='fullscreen container-content'>
         <Component {...props} ref={wrapper} />
 
-        <button className='fullscreen__button' ref={button}>
-          Открыть
+        <button className='fullscreen__button custom-button' ref={button}>
+          Развернуть
         </button>
       </div>
     );

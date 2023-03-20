@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux';
 import { Game } from '../../game/Game';
 import { withFullscreen } from '../../hocs/withFullscreen';
 import { setPoints } from './slice';
+import './index.scss';
 
 type CanvasProps = {
   mapName: string;
