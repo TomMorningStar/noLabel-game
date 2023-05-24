@@ -2,16 +2,23 @@
   "name": "client-server-template-with-vite",
   "private": true,
   "scripts": {
-    "bootstrap": "yarn && node init.js && lerna clean && yarn && lerna bootstrap",
+    "bootstrap": "yarn && node init.js && lerna clean --yes && yarn && lerna bootstrap",
     "build": "lerna run build",
-    "dev:client": "lerna run dev  --scope=client",
+    "dev:client": "lerna run dev --scope=client",
     "dev:server": "lerna run dev --scope=server",
     "dev": "lerna run dev",
+    "start:client": "lerna run start --scope=client",
+    "start:server": "lerna run start --scope=server",
+    "start": "lerna run start",
     "test": "lerna run test",
     "lint": "lerna run lint",
     "format": "lerna run format",
     "preview": "lerna run preview",
-		"stylelint": "lerna run stylelint"
+    "slint": "lerna run slint",
+    "docker:up": "docker compose up",
+    "docker:client": "docker compose up client",
+    "docker:server": "docker compose up server",
+    "docker:postgres": "docker compose up postgres"
   },
   "license": "MIT",
   "workspaces": [
