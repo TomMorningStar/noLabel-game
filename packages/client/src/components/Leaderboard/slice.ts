@@ -1,11 +1,13 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { currentUser } from '@store/selectors';
 import {
   LeaderboardResponse,
   LeaderboardUserType,
   pushLeaderboardRequest,
 } from '@typings/app.typings';
+import { SERVER_URL } from '@typings/constants';
 import axios from 'axios';
+
+import { currentUser } from '@/store/selectors';
 
 const initialState = {
   leaderboard: [],
@@ -52,7 +54,8 @@ export const fetchLeaderboard = createAsyncThunk('leaderboard/fetchLeaderboard',
     cursor: 0,
     limit: 20,
   };
-  return await axios('https://ya-praktikum.tech/api/v2/leaderboard/all', {
+  
+  return axios(`${SERVER_URL}api/v2/leaderboard/all`, {
     method: 'post',
     data: JSON.stringify(data),
     headers: {
@@ -67,7 +70,7 @@ export const pushUserScore = createAsyncThunk(
   'leaderboard/pushUserScore',
   async ({ score }: pushLeaderboardRequest, thunkAPI) => {
     try {
-      const user = currentUser(thunkAPI.getState());
+      const user = currentUser(thunkAPI.getState() as never);
       const data = {
         data: {
           id: user.id,
@@ -80,7 +83,7 @@ export const pushUserScore = createAsyncThunk(
         ratingFieldName: 'towerDefenceScore',
       };
 
-      await axios('https://ya-praktikum.tech/api/v2/leaderboard', {
+      await axios(`${SERVER_URL}api/v2/leaderboard`, {
         method: 'post',
         data: JSON.stringify(data),
         headers: {

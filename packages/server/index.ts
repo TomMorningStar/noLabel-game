@@ -9,9 +9,9 @@ import { forumTopic } from './API/routes/forumTopicRoutes';
 import { leaderboard } from './API/routes/leaderboardRoutes';
 import { themes } from './API/routes/themeRoutes';
 import { users } from './API/routes/userRoutes';
+import { proxyMiddleware } from './middlewares/proxy';
 import { initPostgreSQLConnection } from './db';
 
-// Загрузка переменных окружения
 dotenv.config();
 
 // Инициализация соединения с БД
@@ -19,11 +19,27 @@ initPostgreSQLConnection();
 
 // Создание сервера
 const app = express();
-app.use(cors());
-const port = process.env.SERVER_PORT || 3001;
 
-// Защита от некоторых типов атак
-app.use(helmet());
+const port = process.env.SERVER_PORT || 3001;
+const apiURL =
+  !process.env.NODE_ENV || process.env.NODE_ENV === 'development'
+    ? process.env.REDIRECT_URL
+    : process.env.REDIRECT_URL_PROD;
+
+// Установка заголовков
+app
+  .use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    })
+  )
+  .use(
+    cors({
+      origin: apiURL,
+      credentials: true,
+      exposedHeaders: ['Origin, X-Requested-With, Content-Type, Accept'],
+    })
+  );
 
 // Подключение роутов
 app.use('/api/user', users);
@@ -32,6 +48,9 @@ app.use('/api/forum/topics', forumTopic);
 app.use('/api/forum/messages', forumMessage);
 app.use('/api/forum/emoji', emoji);
 app.use('/api/leaderboard', leaderboard);
+
+// Middleware
+app.use('/api/v2', proxyMiddleware);
 
 // Запуск сервера
 try {

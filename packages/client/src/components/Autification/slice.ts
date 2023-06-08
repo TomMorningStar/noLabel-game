@@ -1,7 +1,6 @@
 import React from 'react';
 import { NavigateFunction } from 'react-router';
 import { toast } from 'react-toastify';
-import { clearLeaderboard } from '@components/Leaderboard/slice';
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import {
   ChangePasswordType,
@@ -10,21 +9,34 @@ import {
   ProfileType,
   UserInfo,
 } from '@typings/app.typings';
-import { showError, showSuccess } from '@utils/ShowError';
 import axios, { AxiosResponse } from 'axios';
+
+import { User } from '@/api/types';
+import { clearLeaderboard } from '@/components/Leaderboard/slice';
+import { showError, showSuccess } from '@/utils/ShowError';
 
 const initialState = {
   user: {
-    id: null,
-    first_name: null,
-    second_name: null,
-    display_name: null,
-    login: null,
-    avatar: null,
-    email: null,
-    phone: null,
+    id: null as number | null,
+    first_name: null as string | null,
+    second_name: null as string | null,
+    display_name: null as string | null,
+    login: null as string | null,
+    avatar: null as string | null,
+    email: null as string | null,
+    phone: null as string | null,
   },
+  isLoaded: false,
 };
+
+interface IUserService {
+  getCurrentUser(): Promise<User>;
+}
+
+export const loadMe = createAsyncThunk<User>('user/loadGreeting', async (_, thunkApi) => {
+  const service: IUserService = thunkApi.extra as IUserService;
+  return service.getCurrentUser();
+});
 
 export const userReducer = createSlice({
   name: 'user',
@@ -45,15 +57,45 @@ export const userReducer = createSlice({
       state.user.phone = null;
     },
   },
+  extraReducers: (builder) => {
+    builder.addCase(loadMe.fulfilled, (store, action) => {
+      const { payload } = action;
+      store.user = {
+        id: payload.id,
+        first_name: payload.first_name,
+        second_name: payload.second_name,
+        display_name: payload.display_name,
+        login: payload.login,
+        avatar: payload.avatar,
+        email: payload.email,
+        phone: payload.phone,
+      };
+      store.isLoaded = true;
+    });
+    builder.addCase(loadMe.pending, (store) => {
+      store.isLoaded = false;
+    });
+    builder.addCase(loadMe.rejected, (store) => {
+      store.isLoaded = true;
+      store.user = {
+        id: null,
+        first_name: null,
+        second_name: null,
+        display_name: null,
+        login: null,
+        avatar: null,
+        email: null,
+        phone: null,
+      };
+    });
+  },
 });
 
 export const { setUser, removeUser } = userReducer.actions;
 export default userReducer.reducer;
 
-const redirectUri = `http://localhost:3000/`;
-
 export const loginWithToken = createAsyncThunk('user/token', async () => {
-  axios(`https://ya-praktikum.tech/api/v2/oauth/yandex/service-id?redirect_uri=${redirectUri}`, {
+  axios(`${__SERVER_URL__}api/v2/oauth/yandex/service-id?redirect_uri=${__REDIRECT_URL__}`, {
     method: 'get',
     headers: {
       Accept: 'application/json',
@@ -63,7 +105,7 @@ export const loginWithToken = createAsyncThunk('user/token', async () => {
     responseType: 'json',
   })
     .then((response) => {
-      document.location.href = `https://oauth.yandex.ru/authorize?response_type=code&client_id=${response.data.service_id}&redirect_uri=${redirectUri}`;
+      document.location.href = `https://oauth.yandex.ru/authorize?response_type=code&client_id=${response.data.service_id}&redirect_uri=${__REDIRECT_URL__}`;
     })
     .catch(() => {
       showError();
@@ -82,7 +124,7 @@ export const signInWithToken = createAsyncThunk(
     },
     thunkAPI
   ) => {
-    axios('https://ya-praktikum.tech/api/v2/oauth/yandex', {
+    axios(`${__SERVER_URL__}api/v2/oauth/yandex`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
@@ -90,7 +132,7 @@ export const signInWithToken = createAsyncThunk(
       },
       withCredentials: true,
       responseType: 'json',
-      data: { code: code, redirect_uri: redirectUri },
+      data: { code: code, redirect_uri: __REDIRECT_URL__ },
     })
       .then((response) => {
         if (response.data === 'OK') {
@@ -127,7 +169,7 @@ export const handleSubmitLogin = createAsyncThunk(
     thunkAPI
   ) => {
     const data = JSON.stringify(values);
-    axios('https://ya-praktikum.tech/api/v2/auth/signin', {
+    axios(`${__SERVER_URL__}api/v2/auth/signin`, {
       method: 'post',
       data: data,
       headers: {
@@ -170,7 +212,7 @@ export const getCurrentUser = createAsyncThunk(
     },
     thunkAPI
   ) => {
-    axios(`https://ya-praktikum.tech/api/v2/auth/user`, {
+    axios(`${__SERVER_URL__}api/v2/auth/user`, {
       method: 'get',
       headers: {
         Accept: '*/*',
@@ -235,10 +277,7 @@ export const changeUserProfile = createAsyncThunk(
     editValue.display_name = values.login;
 
     const data = JSON.stringify(editValue);
-
-    console.log(data);
-
-    axios('https://ya-praktikum.tech/api/v2/user/profile', {
+    axios(`${__SERVER_URL__}api/v2/user/profile`, {
       method: 'put',
       data: data,
       headers: {
@@ -265,7 +304,7 @@ export const changeUserPassword = createAsyncThunk(
   'user/profile',
   async ({ navigate, values }: { navigate: NavigateFunction; values: ChangePasswordType }) => {
     const data = JSON.stringify(values);
-    fetch('https://ya-praktikum.tech/api/v2/user/password', {
+    fetch(`${__SERVER_URL__}api/v2/user/password`, {
       method: 'post',
       body: data,
       headers: {
@@ -287,7 +326,7 @@ export const uploadAvatar = createAsyncThunk(
   'user/avatar',
   async ({ image, navigate }: { navigate: NavigateFunction; image: FormData }, thunkAPI) => {
     try {
-      const result = await axios(`https://ya-praktikum.tech/api/v2/user/profile/avatar`, {
+      const result = await axios(`${__SERVER_URL__}api/v2/user/profile/avatar`, {
         method: 'put',
         data: image,
         headers: {
@@ -330,7 +369,7 @@ export const handleSubmitRegistration = createAsyncThunk(
     setFieldError: React.Dispatch<React.SetStateAction<null>>;
   }) => {
     const data = JSON.stringify(values);
-    axios('https://ya-praktikum.tech/api/v2/auth/signup', {
+    axios(`${__SERVER_URL__}api/v2/auth/signup`, {
       method: 'post',
       data: data,
       headers: {
@@ -351,7 +390,7 @@ export const handleSubmitRegistration = createAsyncThunk(
 
 export const logOut = createAsyncThunk('user/logOut', async (_, thunkAPI) => {
   try {
-    fetch('https://ya-praktikum.tech/api/v2/auth/logout', {
+    fetch(`${__SERVER_URL__}api/v2/auth/logout`, {
       method: 'post',
       credentials: 'include',
       headers: {

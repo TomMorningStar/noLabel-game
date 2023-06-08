@@ -1,12 +1,13 @@
 import { useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
-import { logOut, removeUser } from '@components/Autification/slice';
-import { Button } from '@components/Button';
-import { clearLeaderboard } from '@components/Leaderboard/slice';
-import { UserCard } from '@components/UserCard';
-import { currentUser } from '@store/selectors';
-import { Spacer } from '@ui/Spacer';
-import { useAppDispatch } from '@utils/hooks/reduxHooks';
+
+import { logOut, removeUser } from '@/components/Autification/slice';
+import { Button } from '@/components/Button';
+import { clearLeaderboard } from '@/components/Leaderboard/slice';
+import { UserCard } from '@/components/UserCard';
+import { currentUser } from '@/store/selectors';
+import { Spacer } from '@/ui/Spacer';
+import { useAppDispatch } from '@/utils/hooks/reduxHooks';
 
 import './index.scss';
 
@@ -14,6 +15,8 @@ export const Header = () => {
   const user = useSelector(currentUser);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+
+  // console.log(completed, isAuthenticated);
 
   const handleLogOut = () => {
     dispatch(logOut());
@@ -41,7 +44,7 @@ export const Header = () => {
               Форум
             </Link>
           </div>
-          {!user.login ? (
+          {!user.id ? (
             <div className='header__container header__container_autch'>
               <Button text={'ВХОД'} onClick={() => navigate('/login')} />
             </div>

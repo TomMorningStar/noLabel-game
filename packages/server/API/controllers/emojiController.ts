@@ -42,8 +42,12 @@ export const getAllEmojiByMessageId = async (req: Request, res: Response) => {
  */
 export const createOrUpdateEmoji = async (req: Request, res: Response) => {
   try {
+    if (res.locals?.user?.id !== req.body.author_id) {
+      res.status(StatusCodes.BAD_REQUEST).json({ reason: 'Некорректный запрос' });
+      return;
+    }
     const message = await ForumMessage.findByPk(req.body.message_id);
-    const user = await User.findByPk(req.body.author_id);
+    const user = res.locals.user as User;
     if (message && user) {
       let emoji = await Emoji.findOne({
         where: {
@@ -131,17 +135,5 @@ export const deleteEmojiById = async (req: Request, res: Response) => {
     }
   } catch (e) {
     res.status(StatusCodes.BAD_REQUEST).json(e);
-  }
-};
-
-/** Удаление всех эмодзи по id сообщения
- * ВНИМАНИЕ! Функция для использования в других контроллерах
- * @param message_id {number} - id сообщения, эмодзи которого нужно удалить
- * */
-export const deleteAllEmojiByMessageId = async (message_id: number) => {
-  try {
-    await Emoji.destroy({ where: { message_id } });
-  } catch (e) {
-    console.error(e);
   }
 };
